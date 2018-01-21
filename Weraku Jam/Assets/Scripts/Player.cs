@@ -37,16 +37,20 @@ public class Player : MonoBehaviour
 				break;
 			}
 		}
-		if (col.gameObject.tag == "Coin") {
-			gmScript.score++;
-			gmScript.coin.SetActive (false);
-		}
 	}
 
 	void OnCollisionExit2D (Collision2D col)
 	{
 		if (col.gameObject.tag == "Platform") {
 			gmScript.isOnGround = false;
+		}
+	}
+
+	void OnTriggerEnter2D (Collider2D col)
+	{
+		if (col.gameObject.tag == "Coin") {
+			gmScript.score++;
+			gmScript.coin.SetActive (false);
 		}
 	}
 }
