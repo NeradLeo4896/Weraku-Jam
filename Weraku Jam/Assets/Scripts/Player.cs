@@ -4,26 +4,45 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-	#region Declarations
+	public GameManager gmScript;
 
-	Animator anim;
-	Rigidbody2D rb;
-	public float jumpSpeed = 1.0f;
-
-	#endregion
+	void Awake ()
+	{
+		
+	}
 
 	// Use this for initialization
 	void Start ()
 	{
-		anim = GetComponent<Animator> ();
-		rb = GetComponent<Rigidbody2D> ();
+		
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			rb.velocity = new Vector2 (rb.velocity.x, rb.velocity.y + jumpSpeed);
+		
+	}
+
+	void OnCollisionEnter2D (Collision2D col)
+	{
+		if (col.gameObject.tag == "Platform") {
+			gmScript.isOnGround = true;
+			gmScript.canJump = true;
+			switch (gmScript.gameState) {
+			case GameState.Menu:
+				gmScript.playerAnim.Play ("Idle_1x");
+				break;
+			case GameState.Play:
+				gmScript.playerAnim.Play ("Run_1x");
+				break;
+			}
+		}
+	}
+
+	void OnCollisionExit2D (Collision2D col)
+	{
+		if (col.gameObject.tag == "Platform") {
+			gmScript.isOnGround = false;
 		}
 	}
 }
