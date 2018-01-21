@@ -23,8 +23,6 @@ public class GameManager : MonoBehaviour
 	public float runSpeed = 1.0f;
 	public float maxRunSpeed = 10.0f;
 	public float jumpSpeed = 1.0f;
-	public int jumpsLeft;
-	public int maxJumps = 2;
 	public bool isOnGround = false;
 	public bool canJump = true;
 
@@ -34,17 +32,26 @@ public class GameManager : MonoBehaviour
 	public Button quitButton;
 
 	//! Environment
+	public float environmentSpeed = 1.0f;
 	public GameObject bg1;
 	public GameObject bg2;
-	public float environmentSpeed = 1.0f;
+	public float bgSpeed = 0.3f;
+	public GameObject tsunami;
+	public float tsunamiDestinationX = -5f;
+	public float tsunamiLerpRate = 0.1f;
 
 	//! Camera
 	public GameObject mainCamera;
 	public float mainCameraSpeed = 0.5f;
 	public float cameraXOffset = 10.0f;
 
-	//! Tilesets
-	public List<GameObject> tileSet = new List<GameObject> ();
+	//! tilesets
+	public List<GameObject> tileset = new List<GameObject> ();
+	public float randomTilesetOffset = 1.0f;
+	int tilesetIndex;
+	float spawnPoint = 18f;
+	int[] currentTilesetIndex = new int[] { 0, 1 };
+	int currentTilesetIndexCounter = 0;
 
 	//! State machines
 	public GameState gameState = GameState.Menu;
@@ -53,22 +60,49 @@ public class GameManager : MonoBehaviour
 
 	#region Functions
 
+	void SpawnTilesets (int a)
+	{
+		//! Choose new tileset
+		do {
+			tilesetIndex = Random.Range (0, tileset.Count);
+		} while(tilesetIndex == currentTilesetIndex [0] || tilesetIndex == currentTilesetIndex [1]);
+			
+		currentTilesetIndex [currentTilesetIndexCounter] = tilesetIndex;
+		currentTilesetIndexCounter++;
+		if (currentTilesetIndexCounter >= currentTilesetIndex.Length) {
+			currentTilesetIndexCounter = 0;
+		}
+		tileset [tilesetIndex].SetActive (true);
+		tileset [tilesetIndex].transform.position = new Vector2 (spawnPoint + Random.Range (0f, randomTilesetOffset), tileset [a].transform.position.y);
+	}
+
 	void EnvironmentUpdate ()
 	{
-		bg1.transform.position = new Vector3 (bg1.transform.position.x - environmentSpeed * 0.5f * runSpeed, bg1.transform.position.y, bg1.transform.position.z);
-		bg2.transform.position = new Vector3 (bg2.transform.position.x - environmentSpeed * 0.5f * runSpeed, bg2.transform.position.y, bg2.transform.position.z);
+		//! Background
+		bg1.transform.position = new Vector3 (bg1.transform.position.x - environmentSpeed * bgSpeed * runSpeed, bg1.transform.position.y, bg1.transform.position.z);
+		bg2.transform.position = new Vector3 (bg2.transform.position.x - environmentSpeed * bgSpeed * runSpeed, bg2.transform.position.y, bg2.transform.position.z);
 
 		if (bg1.transform.position.x < -19.2f)
 			bg1.transform.position = new Vector3 (19.2f, bg1.transform.position.y, bg1.transform.position.z);
 		if (bg2.transform.position.x < -19.2f)
 			bg2.transform.position = new Vector3 (19.2f, bg2.transform.position.y, bg2.transform.position.z);
 
-		for (int i = 0; i < tileSet.Count; i++) {
-			tileSet [i].transform.position = new Vector2 (tileSet [i].transform.position.x - environmentSpeed * runSpeed, tileSet [i].transform.position.y);
-			if (tileSet [i].transform.position.x < -34.0f) {
-				tileSet [i].SetActive (false);
+		//! Tilesets
+		for (int i = 0; i < tileset.Count; i++) {
+			//! Moving
+			if (tileset [i].activeSelf == true) {
+				tileset [i].transform.position = new Vector2 (tileset [i].transform.position.x - environmentSpeed * runSpeed, tileset [i].transform.position.y);
+			}
+			//! When out of bounds
+			if (tileset [i].transform.position.x < -34.0f) {
+				tileset [i].SetActive (false);
+				tileset [i].transform.position = new Vector2 (30f, tileset [i].transform.position.y);
+				SpawnTilesets (i);
 			}
 		}
+
+		tsunami.transform.position = Vector2.Lerp (tsunami.transform.position, new Vector2 (tsunamiDestinationX, tsunami.transform.position.y), tsunamiLerpRate);
+
 	}
 
 	void PlayerUpdate ()
@@ -77,12 +111,10 @@ public class GameManager : MonoBehaviour
 		if (Input.GetKeyDown (KeyCode.Space) && isOnGround && canJump) {
 			playerAnim.Play ("Jump_1x", -1, 0.0f);
 			playerRigidBody.velocity = new Vector2 (playerRigidBody.velocity.x, playerRigidBody.velocity.y + jumpSpeed);
-			jumpsLeft--;
 		} else if (Input.GetKeyDown (KeyCode.Space) && !isOnGround && canJump) {
 			canJump = false;
 			playerAnim.Play ("Jump_1x", -1, 0.0f);
 			playerRigidBody.velocity = new Vector2 (playerRigidBody.velocity.x, playerRigidBody.velocity.y + jumpSpeed);
-			jumpsLeft--;
 		}
 
 		//! Game state to player state
@@ -127,7 +159,9 @@ public class GameManager : MonoBehaviour
 	// Use this for initialization
 	void Start ()
 	{
-		jumpsLeft = maxJumps;
+		for (int i = 2; i < tileset.Count; i++) {
+			tileset [i].SetActive (false);
+		}
 	}
 	
 	// Update is called once per frame
