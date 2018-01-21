@@ -37,6 +37,10 @@ public class Player : MonoBehaviour
 				break;
 			}
 		}
+		if (col.gameObject.tag == "Coin") {
+			gmScript.score++;
+			gmScript.coin.SetActive (false);
+		}
 	}
 
 	void OnCollisionExit2D (Collision2D col)

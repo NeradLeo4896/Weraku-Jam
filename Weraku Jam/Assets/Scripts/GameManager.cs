@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
 	Rigidbody2D playerRigidBody;
 	public float runSpeed = 1.0f;
 	public float maxRunSpeed = 10.0f;
+	public float runSpeedScaling = 0.0001f;
 	public float jumpSpeed = 1.0f;
 	public bool isOnGround = false;
 	public bool canJump = true;
@@ -53,12 +54,23 @@ public class GameManager : MonoBehaviour
 	int[] currentTilesetIndex = new int[] { 0, 1 };
 	int currentTilesetIndexCounter = 0;
 
+	//! Scoring
+	public GameObject coin;
+	public Text scoreText;
+	public int score = 0;
+
+
 	//! State machines
 	public GameState gameState = GameState.Menu;
 
 	#endregion
 
 	#region Functions
+
+	void UIUpdate ()
+	{
+		scoreText.text = "" + score;
+	}
 
 	void SpawnTilesets (int a)
 	{
@@ -73,7 +85,7 @@ public class GameManager : MonoBehaviour
 			currentTilesetIndexCounter = 0;
 		}
 		tileset [tilesetIndex].SetActive (true);
-		tileset [tilesetIndex].transform.position = new Vector2 (spawnPoint + Random.Range (0f, randomTilesetOffset), tileset [a].transform.position.y);
+		tileset [tilesetIndex].transform.position = new Vector2 (spawnPoint + Random.Range (0f, randomTilesetOffset + runSpeed), tileset [a].transform.position.y);
 	}
 
 	void EnvironmentUpdate ()
@@ -83,9 +95,9 @@ public class GameManager : MonoBehaviour
 		bg2.transform.position = new Vector3 (bg2.transform.position.x - environmentSpeed * bgSpeed * runSpeed, bg2.transform.position.y, bg2.transform.position.z);
 
 		if (bg1.transform.position.x < -19.2f)
-			bg1.transform.position = new Vector3 (19.2f, bg1.transform.position.y, bg1.transform.position.z);
+			bg1.transform.position = new Vector3 (19.2f - runSpeed, bg1.transform.position.y, bg1.transform.position.z);
 		if (bg2.transform.position.x < -19.2f)
-			bg2.transform.position = new Vector3 (19.2f, bg2.transform.position.y, bg2.transform.position.z);
+			bg2.transform.position = new Vector3 (19.2f - runSpeed, bg2.transform.position.y, bg2.transform.position.z);
 
 		//! Tilesets
 		for (int i = 0; i < tileset.Count; i++) {
@@ -101,6 +113,19 @@ public class GameManager : MonoBehaviour
 			}
 		}
 
+		//! Coin
+		coin.transform.position = new Vector2 (coin.transform.position.x - environmentSpeed * runSpeed, coin.transform.position.y);
+		if (coin.transform.position.x < -10f) {
+			coin.SetActive (true);
+			coin.transform.position = new Vector2 (10f, Random.Range (0f, 2.0f));
+		}
+
+		//! Speed up
+		if (runSpeed < maxRunSpeed) {
+			runSpeed += runSpeedScaling;
+		}
+
+		//! Others
 		tsunami.transform.position = Vector2.Lerp (tsunami.transform.position, new Vector2 (tsunamiDestinationX, tsunami.transform.position.y), tsunamiLerpRate);
 
 	}
@@ -184,6 +209,7 @@ public class GameManager : MonoBehaviour
 			quitButton.gameObject.SetActive (true);
 			break;
 		}
+		UIUpdate ();
 	}
 
 
